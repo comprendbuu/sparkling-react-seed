@@ -5,22 +5,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/AISearch/ChatInterface";
 import ListedSources from "@/components/AISearch/ListedSources";
 import { AiSearchInterfaceStarter } from "@/components/AISearch/AiSearchInterfaceStarter";
-import { getThread, Thread, ChatMessage,
-// Changed from ThreadMessage to ChatMessage
-Source, getThreadStatus, getCurrentUserId, updateThreadMetadata, createNewThread } from "@/services/threadManagementApi";
+import {
+  getThread,
+  Thread,
+  ChatMessage, // Changed from ThreadMessage to ChatMessage
+  Source,
+  getThreadStatus,
+  getCurrentUserId,
+  updateThreadMetadata,
+  createNewThread,
+} from "@/services/threadManagementApi";
 import { chatQuery } from "@/services/chatInterfaceApi";
 import { useSourceManager } from "@/hooks/useSourceManager";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { SourceType, useThread } from "@/contexts/ThreadContext";
+
 export default function AISearch() {
-  const {
-    threadId
-  } = useParams();
+  const { threadId } = useParams();
   const sidebar = useSidebar();
-  const {
-    selectedSource,
-    setSelectedSource
-  } = useThread();
+  const { selectedSource, setSelectedSource } = useThread();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
@@ -32,15 +35,18 @@ export default function AISearch() {
   const POLLING_INTERVAL_MS = 10000;
   const currentThreadId = useRef<string | null>(null);
   const [currentQuery, setCurrentQuery] = useState("");
+
   useEffect(() => {
     console.log("[useEffect] threadId:", threadId);
     currentThreadId.current = threadId || null;
+
     const loadThread = async () => {
       if (!threadId || threadId === "new") {
         setThread(null); // Clear any previous thread data for "new"
         setIsLoading(false);
         return;
       }
+
       setIsLoading(true);
       try {
         const threadData = await getThread(threadId);
@@ -58,7 +64,10 @@ export default function AISearch() {
         }
 
         // Only start polling if the thread has messages and is not completed
-        if (threadData.status_indicator !== "completed" && threadData.messages.length > 0) {
+        if (
+          threadData.status_indicator !== "completed" &&
+          threadData.messages.length > 0
+        ) {
           startPolling(threadId);
         }
       } catch (error) {
@@ -67,7 +76,9 @@ export default function AISearch() {
         setIsLoading(false);
       }
     };
+
     loadThread();
+
     return () => {
       console.log("[useEffect cleanup] Clearing polling interval");
       if (pollingInterval.current !== null) {
@@ -76,6 +87,7 @@ export default function AISearch() {
       }
     };
   }, [threadId, setSelectedSource]);
+
   const handleSearch = async (query: string, maxSources: number, sourceType: SourceType = 'pubmed') => {
     console.log(`[handleSearch] Using source type: ${sourceType} for thread ${threadId}`);
     console.log("[handleSearch] Search query:", query, "maxSources:", maxSources, "source:", sourceType);
@@ -84,42 +96,37 @@ export default function AISearch() {
 
     // Generate a temporary thread ID for immediate UI feedback
     const tempThreadId = `temp-${Date.now()}`;
-
+    
     // Create optimistic thread data
     const optimisticThread: Thread = {
       thread_uid: tempThreadId,
-      owner_uid: "",
-      // Will be replaced with actual userId
+      owner_uid: "", // Will be replaced with actual userId
       shared_with: [],
-      messages: [{
-        type: "question",
-        content: query
-      }] as ChatMessage[],
-      // Changed from ThreadMessage to ChatMessage
+      messages: [{ type: "question", content: query }] as ChatMessage[], // Changed from ThreadMessage to ChatMessage
       sources: [],
-      status_indicator: "searching"
+      status_indicator: "searching",
     };
-
+    
     // Immediately update UI with optimistic data
     if (!threadId || threadId === "new") {
       // For new threads, update the state right away
       setThread(optimisticThread);
-
+      
       // Navigate immediately to show the thread view
       const optimisticPath = `/search/${tempThreadId}`;
       navigate(optimisticPath);
     } else {
       // For existing threads, add the new question optimistically
-      setThread(prevThread => {
+      setThread((prevThread) => {
         if (!prevThread) return optimisticThread;
+        
         return {
           ...prevThread,
-          messages: [...prevThread.messages, {
-            type: "question",
-            content: query
-          } as ChatMessage // Changed from ThreadMessage to ChatMessage
+          messages: [
+            ...prevThread.messages,
+            { type: "question", content: query } as ChatMessage, // Changed from ThreadMessage to ChatMessage
           ],
-          status_indicator: "searching"
+          status_indicator: "searching",
         };
       });
     }
@@ -138,20 +145,25 @@ export default function AISearch() {
 
         // Replace temporary URL with real one without causing a page refresh
         window.history.replaceState(null, "", `/search/${searchThreadId}`);
-
+        
         // Update the thread state with the real ID
         setThread(prev => {
           if (!prev) return null;
           return {
             ...prev,
-            thread_uid: searchThreadId as string,
+            thread_uid: searchThreadId as string, 
             owner_uid: userId
           };
         });
       }
 
       // Submit the search query and wait for confirmation (in background)
-      const queryResponse = await chatQuery(query, searchThreadId as string, maxSources, sourceType);
+      const queryResponse = await chatQuery(
+        query,
+        searchThreadId as string, 
+        maxSources,
+        sourceType
+      );
       console.log("[handleSearch] Chat query submitted:", queryResponse);
 
       // Update the thread name with the query
@@ -174,35 +186,48 @@ export default function AISearch() {
         return {
           ...prev,
           // Use a valid status indicator instead of "error"
-          status_indicator: "completed"
+          status_indicator: "completed", 
         };
       });
-
+      
       // Optionally show an error toast or notification here
-
+      
       setIsSearchLoading(false);
     }
   };
+
   const startPolling = (threadId: string) => {
     console.log("[startPolling] Starting polling for threadId:", threadId);
+
     if (pollingInterval.current) {
-      console.log("[startPolling] Clearing existing interval:", pollingInterval.current);
+      console.log(
+        "[startPolling] Clearing existing interval:",
+        pollingInterval.current
+      );
       clearInterval(pollingInterval.current);
       pollingInterval.current = null;
     }
+
     pollingAttempts.current = 0;
+
     const pollThread = async () => {
       try {
         pollingAttempts.current += 1;
-        console.log(`[pollThread] Attempt ${pollingAttempts.current} for threadId:`, threadId);
+        console.log(
+          `[pollThread] Attempt ${pollingAttempts.current} for threadId:`,
+          threadId
+        );
+
         const status = await getThreadStatus(threadId);
         console.log("[pollThread] Current thread status:", status);
+
         if (status === "completed") {
           console.log("[pollThread] Status completed, fetching updated thread");
           if (pollingInterval.current) {
             clearInterval(pollingInterval.current);
             pollingInterval.current = null;
           }
+
           const updatedThread = await getThread(threadId);
           console.log("[pollThread] Updated thread fetched:", updatedThread);
           setThread(updatedThread);
@@ -234,8 +259,12 @@ export default function AISearch() {
     pollThread();
 
     // Then start interval
-    pollingInterval.current = window.setInterval(pollThread, POLLING_INTERVAL_MS);
+    pollingInterval.current = window.setInterval(
+      pollThread,
+      POLLING_INTERVAL_MS
+    );
   };
+
   const isSearchBarActive = () => {
     // Allow search if:
     // 1. No thread exists yet
@@ -247,35 +276,39 @@ export default function AISearch() {
   };
 
   // Transform thread messages into the format expected by ChatInterface
-  const formatMessages = (messages: ChatMessage[] = []) => {
-    // Changed from ThreadMessage to ChatMessage
-    return messages.map(msg => {
+  const formatMessages = (messages: ChatMessage[] = []) => { // Changed from ThreadMessage to ChatMessage
+    return messages.map((msg) => {
       if (msg.type === "question") {
         return {
           type: "question" as const,
-          content: msg.content as string
+          content: msg.content as string,
         };
       } else {
-        const sourceIdToIndex = thread?.sources.reduce((acc, source, index) => {
-          acc[source.pmid] = index + 1;
-          return acc;
-        }, {} as Record<string, number>) || {};
+        const sourceIdToIndex =
+          thread?.sources.reduce((acc, source, index) => {
+            acc[source.pmid] = index + 1;
+            return acc;
+          }, {} as Record<string, number>) || {};
+
         return {
           type: "answer" as const,
-          content: (msg.content as Array<{
-            claim: string;
-            relevant_source_quote: string;
-            source_id: string;
-          }>).map(item => ({
+          content: (
+            msg.content as Array<{
+              claim: string;
+              relevant_source_quote: string;
+              source_id: string;
+            }>
+          ).map((item) => ({
             claim: item.claim,
             relevant_source_quote: item.relevant_source_quote,
             source_id: item.source_id,
-            linked_index: sourceIdToIndex[item.source_id] || null
-          }))
+            linked_index: sourceIdToIndex[item.source_id] || null,
+          })),
         };
       }
     });
   };
+
   const formatSources = (sources: Source[] = []) => {
     return sources.map((source, index) => ({
       sourceNumber: index + 1,
@@ -294,36 +327,61 @@ export default function AISearch() {
       number_of_citations: source.number_of_citations,
       relevancy_score: source.relevancy_score,
       doi: source.doi,
-      is_full_text_available: source.is_full_text_available
+      is_full_text_available: source.is_full_text_available,
     }));
   };
 
   // Source deduplication using our custom hook
-  const {
-    uniqueSources,
-    mapSourceIndex,
-    totalUniqueSources
-  } = useSourceManager(thread?.sources || []);
+  const { uniqueSources, mapSourceIndex, totalUniqueSources } = useSourceManager(thread?.sources || []);
   const formattedUniqueSources = formatSources(uniqueSources);
-  return <div className="flex h-screen overflow-hidden">
-      {!threadId || threadId === "new" || thread && thread.messages.length === 0 ?
-    // Full-width layout for starter interface
-    <div className="flex-1 min-w-0 flex justify-center">
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {(!threadId || threadId === "new" || (thread && thread.messages.length === 0)) ? (
+        // Full-width layout for starter interface
+        <div className="flex-1 min-w-0 flex justify-center">
           <div className="w-full max-w-3xl">
-            <AiSearchInterfaceStarter onSearch={handleSearch} isLoading={isSearchLoading} />
+            <AiSearchInterfaceStarter 
+              onSearch={handleSearch}
+              isLoading={isSearchLoading}
+            />
           </div>
-        </div> :
-    // Two-column layout for active threads
-    <>
+        </div>
+      ) : (
+        // Two-column layout for active threads
+        <>
           <div className="flex-1 min-w-0 flex justify-center">
             <div className="w-full max-w-[900px]">
-              <ChatInterface onSearch={handleSearch} messages={thread ? formatMessages(thread.messages) : []} isLoading={isLoading} isSearchLoading={isSearchLoading} hoveredSourceId={hoveredSourceId} onSourceHover={setHoveredSourceId} isSearchBarActive={isSearchBarActive()} sources={thread?.sources || []} currentQuery={currentQuery} threadId={threadId || ""} mapSourceIndex={mapSourceIndex} totalUniqueSources={totalUniqueSources} selectedSources={[selectedSource]} />
+              <ChatInterface
+                onSearch={handleSearch}
+                messages={thread ? formatMessages(thread.messages) : []}
+                isLoading={isLoading}
+                isSearchLoading={isSearchLoading}
+                hoveredSourceId={hoveredSourceId}
+                onSourceHover={setHoveredSourceId}
+                isSearchBarActive={isSearchBarActive()}
+                sources={thread?.sources || []}
+                currentQuery={currentQuery}
+                threadId={threadId || ""}
+                mapSourceIndex={mapSourceIndex}
+                totalUniqueSources={totalUniqueSources}
+                selectedSources={[selectedSource]}
+              />
             </div>
           </div>
 
           <div className="w-1/3 lg:w-1/3 xl:w-1/3 max-w-[500px]  flex-shrink-0 border-l border-gray-200 overflow-hidden">
-            <ListedSources sidebar_open={!sidebar.collapsed} sources={formattedUniqueSources} hoveredSourceId={hoveredSourceId} onSourceHover={setHoveredSourceId} scrollOnHover={true} totalCount={totalUniqueSources} />
+            <ListedSources
+              sidebar_open={!sidebar.collapsed}
+              sources={formattedUniqueSources}
+              hoveredSourceId={hoveredSourceId}
+              onSourceHover={setHoveredSourceId}
+              scrollOnHover={true}
+              totalCount={totalUniqueSources}
+            />
           </div>
-        </>}
-    </div>;
+        </>
+      )}
+    </div>
+  );
 }

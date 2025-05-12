@@ -8,7 +8,7 @@ import { AiSearchInterfaceStarter } from "@/components/AISearch/AiSearchInterfac
 import {
   getThread,
   Thread,
-  ChatMessage, // Changed from ThreadMessage to ChatMessage
+  ChatMessage,
   Source,
   getThreadStatus,
   getCurrentUserId,
@@ -348,8 +348,21 @@ export default function AISearch() {
           </div>
         </div>
       ) : (
-        // Two-column layout for active threads
+        // Two-column layout for active threads - SWAPPED POSITIONS HERE
         <>
+          {/* Sources panel - Now on the left */}
+          <div className="w-1/3 lg:w-1/3 xl:w-1/3 max-w-[500px] flex-shrink-0 border-r border-gray-200 overflow-hidden">
+            <ListedSources
+              sidebar_open={!sidebar.collapsed}
+              sources={formattedUniqueSources}
+              hoveredSourceId={hoveredSourceId}
+              onSourceHover={setHoveredSourceId}
+              scrollOnHover={true}
+              totalCount={totalUniqueSources}
+            />
+          </div>
+
+          {/* Chat interface - Now on the right */}
           <div className="flex-1 min-w-0 flex justify-center">
             <div className="w-full max-w-[900px]">
               <ChatInterface
@@ -368,17 +381,6 @@ export default function AISearch() {
                 selectedSources={[selectedSource]}
               />
             </div>
-          </div>
-
-          <div className="w-1/3 lg:w-1/3 xl:w-1/3 max-w-[500px]  flex-shrink-0 border-l border-gray-200 overflow-hidden">
-            <ListedSources
-              sidebar_open={!sidebar.collapsed}
-              sources={formattedUniqueSources}
-              hoveredSourceId={hoveredSourceId}
-              onSourceHover={setHoveredSourceId}
-              scrollOnHover={true}
-              totalCount={totalUniqueSources}
-            />
           </div>
         </>
       )}

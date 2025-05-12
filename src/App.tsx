@@ -11,7 +11,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import AuthWrapper from "./components/AuthWrapper";
 import AISearch from "./pages/AISearch";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Navbar from "./components/Navbar";
@@ -32,14 +31,14 @@ const SearchRedirect = () => {
 };
 
 // Create a layout component that conditionally renders the sidebar
-const AppLayout = ({ signOut }: { signOut: () => void }) => {
+const AppLayout = () => {
   const location = useLocation();
   const showSidebar =
     location.pathname === "/" || location.pathname.startsWith("/search");
 
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col">
-      <Navbar signOut={signOut} />
+      <Navbar />
       <div className="flex flex-1 overflow-hidden">
         {showSidebar && <Sidebar />}
         <main className="flex-1 overflow-hidden">
@@ -62,19 +61,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthWrapper>
-          {(signOut) => (
-            <ThreadProvider>
-              <ChatProvider>
-                <SidebarProvider>
-                  <Router>
-                    <AppLayout signOut={signOut} />
-                  </Router>
-                </SidebarProvider>
-              </ChatProvider>
-            </ThreadProvider>
-          )}
-        </AuthWrapper>
+        <ThreadProvider>
+          <ChatProvider>
+            <SidebarProvider>
+              <Router>
+                <AppLayout />
+              </Router>
+            </SidebarProvider>
+          </ChatProvider>
+        </ThreadProvider>
         <Toaster />
         <Sonner />
       </TooltipProvider>

@@ -1,55 +1,29 @@
+
 // src/App.tsx
 
 import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation,
-  Navigate,
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import AISearch from "@/pages/AISearch";
-import Sidebar from "./components/Sidebar/Sidebar";
-import Navbar from "./components/Navbar";
-import Library from "./pages/Library";
-import { ThreadProvider, useThreadNavigation } from "./contexts/ThreadContext";
-import { ChatProvider } from "./contexts/ChatContext";
-import { SidebarProvider } from "./contexts/SidebarContext";
-import Chat from "./pages/Chat";
-import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
+import NoMatch from "./pages/NoMatch";
 
 const queryClient = new QueryClient();
 
-// Redirect component that uses the thread navigation hook
-const SearchRedirect = () => {
-  const { getCurrentThreadPath } = useThreadNavigation();
-  return <Navigate to={getCurrentThreadPath()} replace />;
-};
-
-// Create a layout component that conditionally renders the sidebar
+// Create a simple layout component
 const AppLayout = () => {
-  const location = useLocation();
-  const showSidebar =
-    location.pathname === "/" || location.pathname.startsWith("/search");
-
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col">
-      <Navbar />
       <div className="flex flex-1 overflow-hidden">
-        {showSidebar && <Sidebar />}
         <main className="flex-1 overflow-hidden">
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/search" element={<SearchRedirect />} />
-            <Route path="/search/:threadId" element={<AISearch />} />
-            <Route path="/library" element={<Library />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/chat/:sourceId" element={<Chat />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<NoMatch />} />
           </Routes>
         </main>
       </div>
@@ -61,15 +35,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <ThreadProvider>
-          <ChatProvider>
-            <SidebarProvider>
-              <Router>
-                <AppLayout />
-              </Router>
-            </SidebarProvider>
-          </ChatProvider>
-        </ThreadProvider>
+        <Router>
+          <AppLayout />
+        </Router>
         <Toaster />
         <Sonner />
       </TooltipProvider>

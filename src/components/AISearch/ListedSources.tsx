@@ -42,6 +42,7 @@ export default function ListedSources({
   const sourceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isInternalHover, setIsInternalHover] = useState(false);
+  
   useEffect(() => {
     if (hoveredSourceId !== null && hoveredSourceId !== undefined && !isInternalHover && scrollOnHover) {
       const sourceElement = sourceRefs.current[hoveredSourceId - 1];
@@ -75,16 +76,16 @@ export default function ListedSources({
   // Use totalCount if provided, otherwise fall back to sources.length
   const displayCount = totalCount !== undefined ? totalCount : sources.length;
   return <div className="h-screen bg-gray-50 border-gray-200 rounded-lg overflow-hidden pb-9">
-      <div className="flex items-center gap-2 p-4 border-b">
-        <h1 className="text-lg font-semibold text-gray-900">
-          Retrieved sources
-        </h1>
-        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white font-medium text-sm">
-          {displayCount}
-        </div>
-      </div>
-      <ScrollArea className="h-[calc(100%-73px)] sources-scroll-area" ref={scrollAreaRef}>
+      <ScrollArea className="h-full sources-scroll-area" ref={scrollAreaRef}>
         <div className="p-2">
+          <div className="flex items-center gap-2 p-4 border-b mb-2">
+            <h1 className="text-lg font-semibold text-gray-900">
+              Retrieved sources
+            </h1>
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-white font-medium text-sm">
+              {displayCount}
+            </div>
+          </div>
           <div className="space-y-2">
             {sources.map((source, index) => <div key={index} ref={el => sourceRefs.current[index] = el} className="relative">
                 <SourceCard sourceNumber={index + 1} title={source.title} authors={source.authors} journal={source.journal} date={source.publication_date} abstract={source.abstract} citations={source.number_of_citations} doi={source.doi} pmid={source.pmid} pmc_id={source.pmc_id} isHovered={hoveredSourceId === index + 1} onHover={handleSourceHover} country={source.country} is_full_text_available={source.is_full_text_available} sidebar_open={sidebar_open} />

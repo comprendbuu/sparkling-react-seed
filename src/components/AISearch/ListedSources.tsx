@@ -3,7 +3,6 @@
 import SourceCard from "./SourceCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEffect, useRef, useState } from "react";
-
 interface Source {
   sourceNumber: number;
   pmid: string;
@@ -23,7 +22,6 @@ interface Source {
   doi: string | null;
   is_full_text_available: boolean;
 }
-
 interface ListedSourcesProps {
   sources: Source[];
   hoveredSourceId?: number | null;
@@ -32,35 +30,36 @@ interface ListedSourcesProps {
   totalCount?: number; // Add new prop to display total unique source count
   sidebar_open?: boolean;
 }
-
 export default function ListedSources({
   sources,
   hoveredSourceId,
   onSourceHover,
-  scrollOnHover = false, // Default to false to disable autoscrolling
+  scrollOnHover = false,
+  // Default to false to disable autoscrolling
   totalCount,
-  sidebar_open = false,
+  sidebar_open = false
 }: ListedSourcesProps): JSX.Element {
   const sourceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isInternalHover, setIsInternalHover] = useState(false);
-
   useEffect(() => {
     if (hoveredSourceId !== null && hoveredSourceId !== undefined && !isInternalHover && scrollOnHover) {
       const sourceElement = sourceRefs.current[hoveredSourceId - 1];
       const scrollArea = document.querySelector('.sources-scroll-area > [data-radix-scroll-area-viewport]');
-      
       if (sourceElement && scrollArea) {
         // Smoothly scroll the source into view
         scrollArea.scrollTo({
-          top: sourceElement.offsetTop - 100, // Add some vertical padding
+          top: sourceElement.offsetTop - 100,
+          // Add some vertical padding
           behavior: 'smooth'
         });
-        
+
         // Prevent the event from affecting other parts of the page
-        sourceElement.addEventListener('mouseenter', (e) => {
+        sourceElement.addEventListener('mouseenter', e => {
           e.stopPropagation();
-        }, { once: true });
+        }, {
+          once: true
+        });
       }
     }
   }, [hoveredSourceId, isInternalHover, scrollOnHover]);
@@ -75,9 +74,7 @@ export default function ListedSources({
 
   // Use totalCount if provided, otherwise fall back to sources.length
   const displayCount = totalCount !== undefined ? totalCount : sources.length;
-
-  return (
-    <div className="h-screen bg-gray-50 border-gray-200 rounded-lg overflow-hidden pb-9">
+  return <div className="h-screen bg-gray-50 border-gray-200 rounded-lg overflow-hidden pb-9">
       <div className="flex items-center gap-2 p-4 border-b">
         <h1 className="text-lg font-semibold text-gray-900">
           Retrieved sources
@@ -89,34 +86,11 @@ export default function ListedSources({
       <ScrollArea className="h-[calc(100%-73px)] sources-scroll-area" ref={scrollAreaRef}>
         <div className="p-2">
           <div className="space-y-2">
-            {sources.map((source, index) => (
-              <div 
-                key={index} 
-                ref={(el) => (sourceRefs.current[index] = el)}
-                className="relative"
-              >
-                <SourceCard
-                  sourceNumber={index + 1}
-                  title={source.title}
-                  authors={source.authors}
-                  journal={source.journal}
-                  date={source.publication_date}
-                  abstract={source.abstract}
-                  citations={source.number_of_citations}
-                  doi={source.doi}
-                  pmid={source.pmid}
-                  pmc_id={source.pmc_id}
-                  isHovered={hoveredSourceId === index + 1}
-                  onHover={handleSourceHover}
-                  country={source.country}
-                  is_full_text_available={source.is_full_text_available}
-                  sidebar_open={sidebar_open}
-                />
-              </div>
-            ))}
+            {sources.map((source, index) => <div key={index} ref={el => sourceRefs.current[index] = el} className="relative">
+                <SourceCard sourceNumber={index + 1} title={source.title} authors={source.authors} journal={source.journal} date={source.publication_date} abstract={source.abstract} citations={source.number_of_citations} doi={source.doi} pmid={source.pmid} pmc_id={source.pmc_id} isHovered={hoveredSourceId === index + 1} onHover={handleSourceHover} country={source.country} is_full_text_available={source.is_full_text_available} sidebar_open={sidebar_open} />
+              </div>)}
           </div>
         </div>
       </ScrollArea>
-    </div>
-  );
+    </div>;
 }
